@@ -12,5 +12,8 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('github_users.search');
 });
+
+Route::get('/search/users/{search}', 'GitHubUserController@search');
+Route::get('/users/followers/', 'GitHubUserController@getFollowers');
