@@ -1,14 +1,19 @@
 var parse = require('parse-link-header');
 
+// bind event handler
 $('#search-github-users').click(function(e){
     e.preventDefault();
     let search = $('#i-username').val();
     searchGitHubUsers(search);
 });
 
+// retrieve info from API
 function searchGitHubUsers(search) {
     // clear any previous results
     $('#results').html('');
+    
+    if (search == '')
+        return;
 
     axios.get(`/search/users/${search}`)
     .then(function (response) {
@@ -29,27 +34,39 @@ function searchGitHubUsers(search) {
     });
 }
 
+// update the search
 function updateSearch(el) {
-    let username = $(el).text();
+    let username = el.textContent;
+    // prevent update if already selected
+    if ($('#i-username').val() == username)
+        return;
     $('#i-username').val(username);
     searchGitHubUsers(username);
 }
 
+// output a list of users
 function listUsers(users) {
     for (let user of users) {
         $('#results').append(`
         <div>
-            <a href='javascript:void(0)' onclick="updateSearch(this);">${user.login}</a>
+            <a href='javascript:void(0)'>${user.login}</a>
         </div>
         `);
+        $('a').click(function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            updateSearch(e.currentTarget);
+        });
     }
 }
 
+// show the specified user
 function showUser(user) {
     $('#results').html(`<h3>${user.login}</h3>`);
     getFollowers(user.followers_url, listFollowers);
 }
 
+// get follower info from API
 function getFollowers(url, callback) {
     axios.get(`/users/followers`, {params: {url: url}})
     .then(function (response) {
@@ -63,9 +80,10 @@ function getFollowers(url, callback) {
     });
 }
 
+// output followers
 function listFollowers(followers, links = {}) {
     // only add the following if we're on the first page
-    if (! links.prev)
+    if (! (links && links.prev))
         $('#results').append(`<h4>Followers:</h4>
         <div class="followers row"></div>`);
 
@@ -80,7 +98,8 @@ function listFollowers(followers, links = {}) {
         </a>`);
     }
 
-    if (links.next) {
+    // include load more button and handler
+    if (links && links.next) {
         $('#load-more').remove();
         $('#results').append(`
             <button type="button" class="btn btn-default" id="load-more">Load More</button>

@@ -35970,15 +35970,19 @@ module.exports = function spread(callback) {
 
 var parse = __webpack_require__(38);
 
+// bind event handler
 $('#search-github-users').click(function (e) {
     e.preventDefault();
     var search = $('#i-username').val();
     searchGitHubUsers(search);
 });
 
+// retrieve info from API
 function searchGitHubUsers(search) {
     // clear any previous results
     $('#results').html('');
+
+    if (search == '') return;
 
     axios.get('/search/users/' + search).then(function (response) {
         var users = response.data.items;
@@ -35996,12 +36000,16 @@ function searchGitHubUsers(search) {
     });
 }
 
+// update the search
 function updateSearch(el) {
-    var username = $(el).text();
+    var username = el.textContent;
+    // prevent update if already selected
+    if ($('#i-username').val() == username) return;
     $('#i-username').val(username);
     searchGitHubUsers(username);
 }
 
+// output a list of users
 function listUsers(users) {
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
@@ -36011,7 +36019,12 @@ function listUsers(users) {
         for (var _iterator = users[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
             var user = _step.value;
 
-            $('#results').append('\n        <div>\n            <a href=\'javascript:void(0)\' onclick="updateSearch(this);">' + user.login + '</a>\n        </div>\n        ');
+            $('#results').append('\n        <div>\n            <a href=\'javascript:void(0)\'>' + user.login + '</a>\n        </div>\n        ');
+            $('a').click(function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                updateSearch(e.currentTarget);
+            });
         }
     } catch (err) {
         _didIteratorError = true;
@@ -36029,11 +36042,13 @@ function listUsers(users) {
     }
 }
 
+// show the specified user
 function showUser(user) {
     $('#results').html('<h3>' + user.login + '</h3>');
     getFollowers(user.followers_url, listFollowers);
 }
 
+// get follower info from API
 function getFollowers(url, callback) {
     axios.get('/users/followers', { params: { url: url } }).then(function (response) {
         var links = parse(response.data.links);
@@ -36044,11 +36059,12 @@ function getFollowers(url, callback) {
     });
 }
 
+// output followers
 function listFollowers(followers) {
     var links = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     // only add the following if we're on the first page
-    if (!links.prev) $('#results').append('<h4>Followers:</h4>\n        <div class="followers row"></div>');
+    if (!(links && links.prev)) $('#results').append('<h4>Followers:</h4>\n        <div class="followers row"></div>');
 
     if (followers.length < 1) {
         $('#results .followers').html('No followers.');
@@ -36065,6 +36081,8 @@ function listFollowers(followers) {
 
             $('#results .followers').append('<a href="' + follower.html_url + '" class="col">\n            <img src="' + follower.avatar_url + '" alt="' + follower.login + '" title="' + follower.login + '" />\n        </a>');
         }
+
+        // include load more button and handler
     } catch (err) {
         _didIteratorError2 = true;
         _iteratorError2 = err;
@@ -36080,8 +36098,7 @@ function listFollowers(followers) {
         }
     }
 
-    console.log(links);
-    if (links.next) {
+    if (links && links.next) {
         $('#load-more').remove();
         $('#results').append('\n            <button type="button" class="btn btn-default" id="load-more">Load More</button>\n        ');
         $('#load-more').click(function () {
