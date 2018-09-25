@@ -35973,11 +35973,28 @@ var parse = __webpack_require__(38);
 // bind event handler
 $('#search-github-users').click(function (e) {
     e.preventDefault();
-    var search = $('#i-username').val();
-    searchGitHubUsers(search);
+    var username = $('#i-username').val();
+    getGitHubUser(username);
 });
 
-// retrieve info from API
+// retrieve user info from API
+function getGitHubUser(username) {
+    // clear any previous results
+    $('#results').html('');
+
+    if (username == '') return;
+
+    axios.get('/users/' + username).then(function (response) {
+        var user = response.data;
+        if (user) showUser(user);else {
+            $('#results').html('<p>User not found; please try another search.</p>');
+        }
+    }).catch(function (error) {
+        console.log(error);
+    });
+}
+
+// use API to search for users
 function searchGitHubUsers(search) {
     // clear any previous results
     $('#results').html('');
@@ -36044,7 +36061,8 @@ function listUsers(users) {
 
 // show the specified user
 function showUser(user) {
-    $('#results').html('<h3>' + user.login + '</h3>');
+    console.log;
+    $('#results').html('<h3>' + user.login + '</h3>\n    <h4>Followers (' + user.followers + '):</h4>');
     getFollowers(user.followers_url, listFollowers);
 }
 
@@ -36064,7 +36082,7 @@ function listFollowers(followers) {
     var links = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     // only add the following if we're on the first page
-    if (!(links && links.prev)) $('#results').append('<h4>Followers:</h4>\n        <div class="followers row"></div>');
+    if (!(links && links.prev)) $('#results').append('<div class="followers row"></div>');
 
     if (followers.length < 1) {
         $('#results .followers').html('No followers.');

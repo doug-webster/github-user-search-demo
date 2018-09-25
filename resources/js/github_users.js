@@ -3,11 +3,33 @@ var parse = require('parse-link-header');
 // bind event handler
 $('#search-github-users').click(function(e){
     e.preventDefault();
-    let search = $('#i-username').val();
-    searchGitHubUsers(search);
+    let username = $('#i-username').val();
+    getGitHubUser(username);
 });
 
-// retrieve info from API
+// retrieve user info from API
+function getGitHubUser(username) {
+    // clear any previous results
+    $('#results').html('');
+
+    if (username == '')
+        return;
+
+    axios.get(`/users/${username}`)
+    .then(function (response) {
+        let user = response.data;
+        if (user)
+            showUser(user);
+        else {
+            $('#results').html('<p>User not found; please try another search.</p>');
+        }
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+}
+
+// use API to search for users
 function searchGitHubUsers(search) {
     // clear any previous results
     $('#results').html('');
@@ -62,7 +84,9 @@ function listUsers(users) {
 
 // show the specified user
 function showUser(user) {
-    $('#results').html(`<h3>${user.login}</h3>`);
+    console.log
+    $('#results').html(`<h3>${user.login}</h3>
+    <h4>Followers (${user.followers}):</h4>`);
     getFollowers(user.followers_url, listFollowers);
 }
 
@@ -84,8 +108,7 @@ function getFollowers(url, callback) {
 function listFollowers(followers, links = {}) {
     // only add the following if we're on the first page
     if (! (links && links.prev))
-        $('#results').append(`<h4>Followers:</h4>
-        <div class="followers row"></div>`);
+        $('#results').append(`<div class="followers row"></div>`);
 
     if (followers.length < 1) {
         $('#results .followers').html(`No followers.`);

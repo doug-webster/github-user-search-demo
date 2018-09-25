@@ -17,3 +17,4 @@ Route::get('/', function () {
 
 Route::get('/search/users/{search}', 'GitHubUserController@search');
 Route::get('/users/followers/', 'GitHubUserController@getFollowers');
+Route::get('/users/{username}', 'GitHubUserController@show');
